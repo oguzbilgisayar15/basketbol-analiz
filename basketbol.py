@@ -3,65 +3,30 @@ import pandas as pd
 from datetime import datetime
 
 # Sayfa Yapılandırması
-st.set_page_config(page_title="Global Basketbol Radarı", layout="wide", page_icon="🌍")
+st.set_page_config(page_title="Global Basketbol Radarı", layout="wide", page_icon="🌎")
 
-# --- SINIRSIZ DÜNYA LİGLERİ MOTORU ---
+# --- GLOBAL VERİ MOTORU (KITALAR VE TÜM LİGLER) ---
 @st.cache_data(ttl=1800)
 def tum_dunyayi_tara():
-    # Dünyadaki tüm majör ve minör ligleri kapsayan geniş bülten
+    # Dünyadaki tüm liglerin kategorize edilmiş listesi
     try:
-        ligler_verisi = [
-            {"L": "Türkiye BSL", "E": "Anadolu Efes", "D": "Fenerbahçe", "S": "19:00", "B": 165.5},
-            {"L": "Türkiye BSL", "E": "Beşiktaş", "D": "Galatasaray", "S": "20:30", "B": 162.5},
-            {"L": "İspanya ACB", "E": "Real Madrid", "D": "Barcelona", "S": "21:45", "B": 168.5},
-            {"L": "NBA", "E": "Lakers", "D": "Warriors", "S": "04:00", "B": 232.5},
-            {"L": "NBA", "E": "Celtics", "D": "Bucks", "S": "03:30", "B": 224.5},
-            {"L": "İtalya Lega A", "E": "Milano", "D": "Virtus Bologna", "S": "20:30", "B": 159.5},
-            {"L": "Almanya BBL", "E": "Bayern", "D": "Alba Berlin", "S": "19:00", "B": 167.5},
-            {"L": "Yunanistan GBL", "E": "Panathinaikos", "D": "Olympiacos", "S": "21:15", "B": 157.5},
-            {"L": "Fransa LNB", "E": "Monaco", "D": "ASVEL", "S": "20:00", "B": 170.5},
-            {"L": "Adriyatik ABA", "E": "Partizan", "D": "Kızılyıldız", "S": "21:00", "B": 163.5},
-            {"L": "Türkiye TBL", "E": "Sigortam.net", "D": "Harem Spor", "S": "16:00", "B": 154.5},
-            {"L": "Çin CBA", "E": "Guangdong", "D": "Beijing Ducks", "S": "14:30", "B": 204.5},
-            {"L": "Avustralya NBL", "E": "Sydney Kings", "D": "Wildcats", "S": "11:30", "B": 186.5},
-            {"L": "Litvanya LKL", "E": "Zalgiris", "D": "Rytas", "S": "18:30", "B": 161.5}
-        ]
-        return pd.DataFrame(ligler_verisi), "BAĞLANTI AKTİF ✅"
-    except:
-        return None, "BAĞLANTI HATASI ❌"
+        data = [
+            # AVRUPA
+            {"Kıta": "Avrupa", "Lig": "Türkiye BSL", "Ev": "Anadolu Efes", "Dep": "Fenerbahçe", "Saat": "19:00", "Barem": 165.5},
+            {"Kıta": "Avrupa", "Lig": "EuroLeague", "Ev": "Real Madrid", "Dep": "Barcelona", "Saat": "21:45", "Barem": 168.5},
+            {"Kıta": "Avrupa", "Lig": "İspanya ACB", "Ev": "Unicaja", "Dep": "Baskonia", "Saat": "19:30", "Barem": 170.5},
+            {"Kıta": "Avrupa", "Lig": "İtalya Lega A", "Ev": "Milano", "Dep": "Virtus Bologna", "Saat": "20:30", "Barem": 159.5},
+            {"Kıta": "Avrupa", "Lig": "Türkiye TBL", "Ev": "Sigortam.net", "Dep": "Harem Spor", "Saat": "16:00", "Barem": 154.5},
+            {"Kıta": "Avrupa", "Lig": "Yunanistan GBL", "Ev": "PAO", "Dep": "Olympiacos", "Saat": "21:15", "Barem": 157.5},
+            {"Kıta": "Avrupa", "Lig": "Almanya BBL", "Ev": "Bayern", "Dep": "Alba Berlin", "Saat": "19:00", "Barem": 167.5},
 
-# --- ARAYÜZ ---
-st.title("🌍 Sınırsız Global Basketbol Analizi")
-st.caption(f"📅 Tarih: {datetime.now().strftime('%d/%m/%Y')} | Tüm Ligler Otomatik Listelenir")
+            # AMERİKA
+            {"Kıta": "Amerika", "Lig": "NBA", "Ev": "Lakers", "Dep": "Warriors", "Saat": "04:00", "Barem": 232.5},
+            {"Kıta": "Amerika", "Lig": "NBA", "Ev": "Celtics", "Dep": "Bucks", "Saat": "03:30", "Barem": 224.5},
+            {"Kıta": "Amerika", "Lig": "Brezilya NBB", "Ev": "Flamengo", "Dep": "Franca", "Saat": "02:00", "Barem": 158.5},
+            {"Kıta": "Amerika", "Lig": "Arjantin LNB", "Ev": "Quimsa", "Dep": "Boca Juniors", "Saat": "03:00", "Barem": 154.5},
 
-df, durum = tum_dunyayi_tara()
-
-if df is not None:
-    # LİG SEÇİCİ
-    st.sidebar.header("🏆 Lig Filtresi")
-    tum_ligler = sorted(df['L'].unique())
-    secilen_ligler = st.sidebar.multiselect("Ligleri Seçin:", tum_ligler, default=tum_ligler)
-    
-    filtreli_df = df[df['L'].isin(secilen_ligler)]
-
-    # MAÇ LİSTESİ (Flashscore Stili)
-    for lig in sorted(filtreli_df['L'].unique()):
-        with st.expander(f"📍 {lig}", expanded=True):
-            lig_maclari = filtreli_df[filtreli_df['L'] == lig]
-            for _, row in lig_maclari.iterrows():
-                c1, c2, c3, c4 = st.columns([1, 3, 1, 1])
-                with c1:
-                    st.write(f"⏰ **{row['S']}**")
-                with c2:
-                    st.write(f"🏀 {row['E']} - {row['D']}")
-                with c3:
-                    st.metric("Barem", row['B'])
-                with c4:
-                    if st.button("Analiz", key=f"anl_{row['E']}_{row['S']}"):
-                        st.toast(f"{row['E']} Analizi Hazırlanıyor...")
-                st.divider()
-else:
-    st.error("Veri yüklenirken bir hata oluştu.")
-
-st.sidebar.divider()
-st.sidebar.info(f"Sistemde şu an {len(tum_ligler)} farklı lig aktif.")
+            # ASYA & OKYANUSYA
+            {"Kıta": "Asya/Pasifik", "Lig": "Çin CBA", "Ev": "Guangdong", "Dep": "Beijing Ducks", "Saat": "14:30", "Barem": 204.5},
+            {"Kıta": "Asya/Pasifik", "Lig": "Avustralya NBL", "Ev": "Sydney Kings", "Dep": "Wildcats", "Saat": "11:30", "Barem": 186.5},
+            {"Kıta": "Asya/Pasifik", "Lig": "Japonya B.League", "Ev": "Chiba Jets", "Dep": "Alvark Tokyo", "Saat": "13:00", "B
