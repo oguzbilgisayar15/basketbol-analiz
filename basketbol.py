@@ -8,8 +8,8 @@ st.set_page_config(page_title="Global Basketbol Radarı", layout="wide", page_ic
 # --- GLOBAL VERİ MOTORU (KITALAR VE TÜM LİGLER) ---
 @st.cache_data(ttl=1800)
 def tum_dunyayi_tara():
-    # Dünyadaki tüm liglerin kategorize edilmiş listesi
     try:
+        # Dünyadaki tüm liglerin hatasız listesi
         data = [
             # AVRUPA
             {"Kıta": "Avrupa", "Lig": "Türkiye BSL", "Ev": "Anadolu Efes", "Dep": "Fenerbahçe", "Saat": "19:00", "Barem": 165.5},
@@ -29,4 +29,55 @@ def tum_dunyayi_tara():
             # ASYA & OKYANUSYA
             {"Kıta": "Asya/Pasifik", "Lig": "Çin CBA", "Ev": "Guangdong", "Dep": "Beijing Ducks", "Saat": "14:30", "Barem": 204.5},
             {"Kıta": "Asya/Pasifik", "Lig": "Avustralya NBL", "Ev": "Sydney Kings", "Dep": "Wildcats", "Saat": "11:30", "Barem": 186.5},
-            {"Kıta": "Asya/Pasifik", "Lig": "Japonya B.League", "Ev": "Chiba Jets", "Dep": "Alvark Tokyo", "Saat": "13:00", "B
+            {"Kıta": "Asya/Pasifik", "Lig": "Japonya B.League", "Ev": "Chiba Jets", "Dep": "Alvark Tokyo", "Saat": "13:00", "Barem": 162.5}
+        ]
+        return pd.DataFrame(data)
+    except:
+        return None
+
+# --- ARAYÜZ TASARIMI ---
+st.title("🏀 Global Basketbol Analiz Merkezi")
+st.caption(f"📅 {datetime.now().strftime('%d/%m/%Y')} | Dünya Bülteni Aktif")
+
+df = tum_dunyayi_tara()
+
+if df is not None:
+    # SIDEBAR (FİLTRELER)
+    st.sidebar.header("🌍 Bölge Seçimi")
+    kitalar = ["Tümü"] + sorted(df['Kıta'].unique().tolist())
+    secilen_kita = st.sidebar.selectbox("Kıta:", kitalar)
+
+    # Filtreleme mantığı
+    temp_df = df.copy()
+    if secilen_kita != "Tümü":
+        temp_df = temp_df[temp_df['Kıta'] == secilen_kita]
+
+    st.sidebar.divider()
+    ligler_listesi = sorted(temp_df['Lig'].unique().tolist())
+    secilen_ligler = st.sidebar.multiselect("Ligleri Filtrele:", ligler_listesi, default=ligler_listesi)
+    
+    final_df = temp_df[temp_df['Lig'].isin(secilen_ligler)]
+
+    # ANA EKRAN (KITALARA GÖRE GRUPLAMA)
+    for kita in final_df['Kıta'].unique():
+        st.subheader(f"📍 {kita}")
+        kita_df = final_df[final_df['Kıta'] == kita]
+        
+        for i, row in kita_df.iterrows():
+            with st.container(border=True):
+                c1, c2, c3, c4 = st.columns([1, 3, 1, 1])
+                with c1:
+                    st.caption(row['Lig'])
+                    st.write(f"⏰ **{row['Saat']}**")
+                with c2:
+                    st.write(f"🏀 **{row['Ev']}** vs **{row['Dep']}**")
+                with c3:
+                    st.metric("Tahmin", f"{row['Barem']}")
+                with c4:
+                    if st.button("Analiz", key=f"btn_{i}_{row['Ev']}"):
+                        st.toast(f"{row['Ev']} verileri çekiliyor...")
+else:
+    st.error("Veri bağlantısı kurulamadı.")
+
+st.sidebar.divider()
+st.sidebar.info(f"Sistemde {len(df['Lig'].unique()) if df is not None else 0} farklı lig aktif.")
